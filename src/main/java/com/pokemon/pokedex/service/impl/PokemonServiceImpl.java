@@ -13,6 +13,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+
 /**
  * The Service class , to call the Pokemon  and Translation api and storing result in memory cache.
  */
@@ -113,11 +115,20 @@ public class PokemonServiceImpl implements PokemonService {
      */
     private ResponseDTO getPokemonResponse(final String name, final PokemonSpeciesDTO pokemonSpeciesDTO) {
         ResponseDTO response = new ResponseDTO();
-        Flavor flavor = pokemonSpeciesDTO.getFlavor_text_entries().get(0);
         response.setName(name);
         response.setHabitat(helperUtil.getHabitat(pokemonSpeciesDTO.getHabitat()));
         response.setLengendary(pokemonSpeciesDTO.isIs_legendary());
-        response.setDescription(flavor.getFlavor_text());
+        response.setDescription(getDescription(pokemonSpeciesDTO.getFlavor_text_entries()));
         return response;
+    }
+
+    /**
+     * Getting the first description element only and remove new line or tabs char.
+     * @param flavor
+     * @return
+     */
+    private String getDescription(final List<Flavor> flavor){
+        Flavor flavortext = flavor.get(0);
+        return flavortext.getFlavor_text().replaceAll("[\\n\\f\\t]", " ");
     }
 }

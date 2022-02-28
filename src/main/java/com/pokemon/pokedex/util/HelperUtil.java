@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.nio.charset.Charset;
+
 /**
  * Utility class use to provide common functions
  */
@@ -113,8 +115,9 @@ public class HelperUtil {
      */
     private String getAPIUri(final String uri, final String description) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(uri);
+
         builder.queryParam(configUtil.getTranslationQueryParamKey(), description);
-        return builder.toUriString();
+        return builder.encode().toUriString();
     }
 
 
