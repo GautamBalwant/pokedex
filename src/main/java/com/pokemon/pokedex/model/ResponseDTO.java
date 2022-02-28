@@ -1,11 +1,11 @@
 package com.pokemon.pokedex.model;
 
-public class ResponseDTO {
+public class ResponseDTO extends ClientResponse{
 
     private String name;
     private String description;
     private String habitat;
-    private boolean isLengendary;
+    private Boolean isLengendary;
 
 
     public String getName() {
@@ -32,11 +32,11 @@ public class ResponseDTO {
         this.habitat = habitat;
     }
 
-    public boolean isLengendary() {
+    public Boolean isLengendary() {
         return isLengendary;
     }
 
-    public void setLengendary(boolean lengendary) {
+    public void setLengendary(Boolean lengendary) {
         isLengendary = lengendary;
     }
 }

@@ -1,16 +1,16 @@
 package com.pokemon.pokedex.service.impl;
 
 import com.pokemon.pokedex.model.*;
+import com.pokemon.pokedex.model.Error;
 import com.pokemon.pokedex.util.HelperUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +37,7 @@ public class PokemonServiceImplTest {
         pokemonService = new PokemonServiceImpl(restTemplate,helperUtil);
         String name= "mewtwo";
         when(helperUtil.getPokemonApiUri(name)).thenReturn("http://localhost:8080/pokemon/mewtwo");
+        when(helperUtil.getHabitat(any())).thenReturn("rare");
         when(restTemplate.getForObject(getPokemonUri(),PokemonAPIResponse.class)).thenReturn(getPokemonAPIResponse());
         when(restTemplate.getForObject(getSpeciesUri(),PokemonSpeciesDTO.class)).thenReturn(getPokemonSpeciesDTO());
         ResponseDTO responseDTO = pokemonService.getPokemonByName(name);
@@ -45,7 +47,41 @@ public class PokemonServiceImplTest {
         assertEquals("rare",responseDTO.getHabitat());
         assertEquals("mewtwo", responseDTO.getName());
         assertNotNull(responseDTO.getDescription());
+    }
 
+
+    @Test
+    public void getPokemonDetailInCaseOfServerExceptionTest(){
+        pokemonService = new PokemonServiceImpl(restTemplate,helperUtil);
+        String name= "mewtwo";
+        when(helperUtil.getPokemonApiUri(name)).thenReturn("http://localhost:8080/pokemon/mewtwo");
+        when(helperUtil.getHttpErrorResponse(any())).thenReturn(getError(500));
+        when(restTemplate.getForObject(getPokemonUri(),PokemonAPIResponse.class))
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+        ResponseDTO responseDTO = pokemonService.getPokemonByName(name);
+        assertNotNull(responseDTO);
+      Error error = responseDTO.getError();
+      assertNotNull(error);
+      assertEquals(500,error.getHttpErrorCode());
+      assertEquals("Internal Error",error.getMessage());
+      assertNull(responseDTO.getDescription());
+    }
+
+    @Test
+    public void getPokemonDetailInCaseOfClientExceptionTest(){
+        pokemonService = new PokemonServiceImpl(restTemplate,helperUtil);
+        String name= "abc";
+        when(helperUtil.getPokemonApiUri(name)).thenReturn("http://localhost:8080/pokemon/mewtwo");
+        when(helperUtil.getHttpErrorResponse(any())).thenReturn(getError(429));
+        when(restTemplate.getForObject(getPokemonUri(),PokemonAPIResponse.class))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+        ResponseDTO responseDTO = pokemonService.getPokemonByName(name);
+        assertNotNull(responseDTO);
+        Error error = responseDTO.getError();
+        assertNotNull(error);
+        assertEquals(429,error.getHttpErrorCode());
+        assertEquals("Internal Error",error.getMessage());
+        assertNull(responseDTO.getDescription());
     }
 
     @Test
@@ -56,6 +92,7 @@ public class PokemonServiceImplTest {
         when(helperUtil.getPokemonApiUri(name)).thenReturn("http://localhost:8080/pokemon/mewtwo");
         when(helperUtil.getTranslationAPIUri(true,"rare",getPokemonDescription())).thenReturn(getTranslationAPI());
         when(helperUtil.getHttpEntity()).thenReturn(entity);
+        when(helperUtil.getHabitat(any())).thenReturn("rare");
         when(restTemplate.getForObject(getPokemonUri(),PokemonAPIResponse.class)).thenReturn(getPokemonAPIResponse());
         when(restTemplate.getForObject(getSpeciesUri(),PokemonSpeciesDTO.class)).thenReturn(getPokemonSpeciesDTO());
         when(restTemplate.exchange(getTranslationAPI(), HttpMethod.GET, entity, TranslationResponse.class)).thenReturn(getTranslatedResponse());
@@ -68,6 +105,50 @@ public class PokemonServiceImplTest {
         assertEquals("mewtwo", responseDTO.getName());
         assertNotNull(responseDTO.getDescription());
         assertEquals("translated",responseDTO.getDescription());
+    }
+
+    @Test
+    public void getTranslatedDescriptionInCaseOfErrorTest(){
+        pokemonService = new PokemonServiceImpl(restTemplate,helperUtil);
+        String name= "mewtwo";
+        HttpEntity entity = getHttpEntity();
+        when(helperUtil.getPokemonApiUri(name)).thenReturn("http://localhost:8080/pokemon/mewtwo");
+        when(helperUtil.getHttpErrorResponse(any())).thenReturn(getError(500));
+        when(restTemplate.getForObject(getPokemonUri(),PokemonAPIResponse.class))
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+
+        ResponseDTO responseDTO = pokemonService.getTranslatedDescription(name);
+
+        assertNotNull(responseDTO);
+        Error error = responseDTO.getError();
+        assertNotNull(error);
+        assertEquals(500,error.getHttpErrorCode());
+        assertEquals("Internal Error",error.getMessage());
+        assertNull(responseDTO.getDescription());
+    }
+
+    @Test
+    public void getTranslatedDescriptionWhenErrorInTranslationAPITest(){
+        pokemonService = new PokemonServiceImpl(restTemplate,helperUtil);
+        String name= "mewtwo";
+        HttpEntity entity = getHttpEntity();
+        when(helperUtil.getPokemonApiUri(name)).thenReturn("http://localhost:8080/pokemon/mewtwo");
+        when(helperUtil.getTranslationAPIUri(true,"rare",getPokemonDescription())).thenReturn(getTranslationAPI());
+        when(helperUtil.getHttpEntity()).thenReturn(entity);
+        when(helperUtil.getHabitat(any())).thenReturn("rare");
+        when(restTemplate.getForObject(getPokemonUri(),PokemonAPIResponse.class)).thenReturn(getPokemonAPIResponse());
+        when(restTemplate.getForObject(getSpeciesUri(),PokemonSpeciesDTO.class)).thenReturn(getPokemonSpeciesDTO());
+        when(restTemplate.exchange(getTranslationAPI(), HttpMethod.GET, entity, TranslationResponse.class)).thenThrow(new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS));
+
+        ResponseDTO responseDTO = pokemonService.getTranslatedDescription(name);
+
+        assertNotNull(responseDTO);
+        assertEquals(true,responseDTO.isLengendary());
+        assertEquals("rare",responseDTO.getHabitat());
+        assertEquals("mewtwo", responseDTO.getName());
+        assertNotNull(responseDTO.getDescription());
+        assertEquals(getPokemonDescription(),responseDTO.getDescription());
     }
 
 private String getTranslationAPI(){
@@ -140,5 +221,14 @@ return pokemonSpeciesDTO;
         response.setContents(contents);
         return ResponseEntity.of(Optional.of(response));
 
+    }
+
+    private Error getError(int code){
+
+        Error error = new Error();
+        error.setMessage("Internal Error");
+        error.setHttpErrorCode(code);
+
+        return  error;
     }
 }

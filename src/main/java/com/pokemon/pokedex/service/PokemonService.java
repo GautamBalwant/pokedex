@@ -10,4 +10,5 @@ public interface PokemonService {
     public ResponseDTO getPokemonByName(String name);
 
     public ResponseDTO getTranslatedDescription(String name);
+
 }
