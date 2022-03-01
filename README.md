@@ -14,29 +14,30 @@ Steps to run
 # about APIs
 
 As per the challenge two apis are exposed at port 8080
- - /pokemon/{name}
- - /pokemon/translated/{name}
+ -Pokemon by name: GET : /pokemon/{name}
+ -Translate Pokemon GET : /pokemon/translated/{name}
 
 (e.g http://localhost:8080/pokemon/mewtwo )
 
- # get pokemon by name API
-  - This Api takes pokemon name as a path variable
-  - First call the "https://pokeapi.co/api/v2/pokemon/{name} api
-  - Retrieve the species URI and then make call to species api to get the description, habitat and lengendary status of the pokemon
-  - The result is stored in the in-memory cache using name as key
-  - In case of exception the cache for the pokemon is cleared
-  - Note some pokemon observed that the habitat was null (e.g "gible") , in those cases "not found" is returned as habitat 
+ # pokemon by name API
+  - This Api takes pokemon name as a path variable.
+  - First call the "https://pokeapi.co/api/v2/pokemon/{name} api.
+  - Retrieve the species URI and then make call to species api to get the description, habitat and lengendary status of the pokemon.
+  - The result is stored in the in-memory cache using name as key.
+  - In case of exception the cache for the pokemon is cleared.
+  - Note some pokemon observed that the habitat was null (e.g "gible") , in those cases "not found" is returned as habitat.
   
  # Translate pokemon description API
-  - This Api takes pokemon name as a path variable
-  - First check if the details are present in cache , else make the api calls to fetch the pokemon details
-  - Then the based on the habitat and status of the pokemon the uri for translation is reterived (eg Yoda or Shakespeare)
-  - Call to relevant translation API is made to get the translation
-  - In case of exception during the translation API call the default description is returned  
-  - The result is stored in the in-memory cache using name as key
+  - This Api takes pokemon name as a path variable.
+  - First check if the details are present in cache, else makes an api call to fetch the pokemon .
+  - Then based on the habitat and status of the pokemon the uri for translation is reterived (eg Yoda or Shakespeare).
+  - Call to relevant translation API is made to get the translated description.
+  - In case of exception during the translation API call the default description is returned.
+  - The result is stored in the in-memory cache using name as key.
   
   
 # how to access
+- Make GET call to following urls
     . http://localhost:8080/pokemon/gible
 	 output : 
 	    {
@@ -66,8 +67,8 @@ As per the challenge two apis are exposed at port 8080
 # production API changes
 
  - Using in-memory cache but in Production need to use a seperate cache system (eg redis) which will also support the distributed env
- - Have not used docker , in production recommended to create docker image
- - Have not added actuator endpoint to check api health in Production it is recomended
+ - In production recommended to create docker image
+ - In Production it is recomended to add actuator endpoint for health checks
  
  
 # Pokemon tested
