@@ -117,7 +117,8 @@ public class HelperUtil {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(uri);
 
         builder.queryParam(configUtil.getTranslationQueryParamKey(), description);
-        return builder.encode().toUriString();
+//        return builder.encode().toUriString();
+        return builder.build(false).encode().toUriString();
     }
 
 

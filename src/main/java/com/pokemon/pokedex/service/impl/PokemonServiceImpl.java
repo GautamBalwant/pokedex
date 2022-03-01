@@ -4,6 +4,8 @@ package com.pokemon.pokedex.service.impl;
 import com.pokemon.pokedex.model.*;
 import com.pokemon.pokedex.service.PokemonService;
 import com.pokemon.pokedex.util.HelperUtil;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -23,10 +25,13 @@ public class PokemonServiceImpl implements PokemonService {
 
     private final RestTemplate restTemplate;
 
+    private final CacheManager cacheManager;
+
     private final HelperUtil helperUtil;
 
-    public PokemonServiceImpl(RestTemplate restTemplate, HelperUtil helperUtil) {
+    public PokemonServiceImpl(RestTemplate restTemplate, CacheManager cacheManager, HelperUtil helperUtil) {
         this.restTemplate = restTemplate;
+        this.cacheManager = cacheManager;
         this.helperUtil = helperUtil;
     }
 
@@ -59,7 +64,7 @@ public class PokemonServiceImpl implements PokemonService {
     @Cacheable(value = "translation", key = "#name")
     public ResponseDTO getTranslatedDescription(final String name) {
         try {
-            ResponseDTO response = getPokemonDetails(name);
+            ResponseDTO response = getDetailsFromCacheIfPersent(name);
             String translatedDescription = getTransalatedDescription(response.isLengendary(), response.getHabitat(), response.getDescription());
             response.setDescription(translatedDescription);
             return response;
@@ -68,6 +73,22 @@ public class PokemonServiceImpl implements PokemonService {
             responseDTO.setError(helperUtil.getHttpErrorResponse(exception));
             return responseDTO;
         }
+    }
+
+    /**
+     * check if the pokemon detail is present in cache , else fetch through api call.
+     *
+     * @param name
+     * @return ResponseDTO
+     */
+    private ResponseDTO getDetailsFromCacheIfPersent(final String name){
+      Cache cache =  cacheManager.getCache("pokemon");
+          ResponseDTO dto = cache.get(name, ResponseDTO.class);
+          if(null != dto){
+              return dto;
+          }
+      return getPokemonDetails(name);
+
     }
 
     /**
@@ -84,6 +105,7 @@ public class PokemonServiceImpl implements PokemonService {
         PokemonSpeciesDTO pokemonSpeciesDTO = restTemplate.getForObject(pokemonDTO.getUrl(), PokemonSpeciesDTO.class);
         return getPokemonResponse(pokemonDTO.getName(), pokemonSpeciesDTO);
     }
+
 
     /**
      * The method to call the Translation api based on habitat and the pokemon status.
