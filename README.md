@@ -3,13 +3,13 @@
 # how to run
 
 Software needed to run
- . Java 8
- . Maven
+ - Java 8
+ - Maven
  
 Steps to run
- . Open a terminal or command prompt at project root folder
- . Run " mvn clean install" command to build the project
- . Run following command "java -jar target/pokedex-0.0.1-SNAPSHOT.jar" to start the application 
+ - Open a terminal or command prompt at project root folder
+ - Run " mvn clean install" command to build the project
+ - Run following command "java -jar target/pokedex-0.0.1-SNAPSHOT.jar" to start the application 
   
 # about APIs
 
